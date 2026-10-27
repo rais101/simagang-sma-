@@ -1,0 +1,6 @@
+{
+  "name": "SIMagang SMA IAS Al-Jannah Depok",
+  "description": "Sistem Informasi Manajemen Magang & Riset Sains Siswa SMA Islam Alam dan Sains (IAS) Al-Jannah Depok - terintegrasi dengan monitoring, nilai kinerja, dan cetak rapor resmi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

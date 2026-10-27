@@ -1,0 +1,114 @@
+{
+  "entities": {
+    "Siswa": {
+      "title": "Siswa",
+      "description": "Data identitas peserta magang sekolah",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unik siswa" },
+        "nisn": { "type": "string", "description": "Nomor Induk Siswa Nasional", "maxLength": 30 },
+        "nama": { "type": "string", "description": "Nama lengkap siswa", "maxLength": 150 },
+        "sekolah": { "type": "string", "description": "Asal sekolah", "maxLength": 150 },
+        "jurusan": { "type": "string", "description": "Jurusan / keahlian", "maxLength": 100 },
+        "tempatMagang": { "type": "string", "description": "Perusahaan / instansi magang", "maxLength": 150 },
+        "divisi": { "type": "string", "description": "Divisi magang", "maxLength": 100 },
+        "mentorNama": { "type": "string", "description": "Nama mentor pembimbing lapangan", "maxLength": 150 },
+        "foto": { "type": "string", "description": "URL foto profil siswa" },
+        "statusMagang": { "type": "string", "description": "Status magang siswa", "enum": ["Aktif", "Selesai", "Tertunda"] },
+        "progresPercent": { "type": "number", "description": "Persentase progres magang" },
+        "nilaiAkhir": { "type": "number", "description": "Nilai rata-rata akhir" },
+        "predikat": { "type": "string", "description": "Predikat nilai akhir" }
+      },
+      "required": ["nama", "sekolah", "jurusan", "tempatMagang"]
+    },
+    "JurnalHarian": {
+      "title": "JurnalHarian",
+      "description": "Laporan catatan kegiatan harian siswa magang",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID jurnal" },
+        "siswaId": { "type": "string", "description": "ID siswa pemilik jurnal", "maxLength": 128 },
+        "tanggal": { "type": "string", "description": "Tanggal pelaksanaan kegiatan", "maxLength": 50 },
+        "aktivitas": { "type": "string", "description": "Uraian kegiatan yang dilakukan", "maxLength": 1000 },
+        "hasil": { "type": "string", "description": "Hasil dan capaian kegiatan", "maxLength": 1000 },
+        "kendala": { "type": "string", "description": "Kendala yang dihadapi jika ada", "maxLength": 500 },
+        "statusParaf": { "type": "string", "description": "Status paraf mentor", "enum": ["Menunggu Paraf", "Disetujui"] },
+        "catatanMentor": { "type": "string", "description": "Umpan balik atau catatan dari mentor", "maxLength": 500 }
+      },
+      "required": ["siswaId", "tanggal", "aktivitas", "hasil", "statusParaf"]
+    },
+    "JadwalMonitoring": {
+      "title": "JadwalMonitoring",
+      "description": "Agenda monitoring dan pendampingan mentor untuk siswa",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID jadwal" },
+        "siswaId": { "type": "string", "description": "ID siswa yang dijadwalkan", "maxLength": 128 },
+        "siswaNama": { "type": "string", "description": "Nama siswa", "maxLength": 150 },
+        "tanggal": { "type": "string", "description": "Tanggal bimbingan", "maxLength": 50 },
+        "waktu": { "type": "string", "description": "Waktu bimbingan", "maxLength": 50 },
+        "topik": { "type": "string", "description": "Topik pembahasan monitoring", "maxLength": 300 },
+        "mode": { "type": "string", "description": "Mode pertemuan", "enum": ["Daring (Online)", "Luring (Kunjungan)"] },
+        "status": { "type": "string", "description": "Status pelaksanaan jadwal", "enum": ["Selesai", "Menunggu", "Dibatalkan"] },
+        "catatanMentor": { "type": "string", "description": "Catatan hasil bimbingan", "maxLength": 500 }
+      },
+      "required": ["siswaId", "siswaNama", "tanggal", "waktu", "topik", "mode", "status"]
+    },
+    "PenilaianKinerja": {
+      "title": "PenilaianKinerja",
+      "description": "Lembar penilaian resmi kinerja magang dari mentor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID penilaian" },
+        "siswaId": { "type": "string", "description": "ID siswa yang dinilai", "maxLength": 128 },
+        "kedisiplinan": { "type": "number", "description": "Skor kedisiplinan (0-100)" },
+        "keterampilan": { "type": "number", "description": "Skor keterampilan (0-100)" },
+        "inisiatif": { "type": "number", "description": "Skor inisiatif (0-100)" },
+        "kerjasama": { "type": "number", "description": "Skor kerjasama (0-100)" },
+        "rataRata": { "type": "number", "description": "Nilai rata-rata skor" },
+        "predikat": { "type": "string", "description": "Predikat kelulusan", "maxLength": 50 },
+        "catatanKinerja": { "type": "string", "description": "Catatan umum kinerja", "maxLength": 1000 },
+        "dinilaiOleh": { "type": "string", "description": "Nama penilai mentor", "maxLength": 150 },
+        "tanggal": { "type": "string", "description": "Tanggal penilaian", "maxLength": 50 }
+      },
+      "required": ["siswaId", "kedisiplinan", "keterampilan", "inisiatif", "kerjasama", "rataRata", "predikat", "dinilaiOleh", "tanggal"]
+    },
+    "LogAktivitas": {
+      "title": "LogAktivitas",
+      "description": "Log jejak aktivitas audit sistem magang",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID log" },
+        "timestamp": { "type": "string", "description": "Waktu pencatatan log", "maxLength": 50 },
+        "pelaku": { "type": "string", "description": "Nama pelaku aksi", "maxLength": 150 },
+        "role": { "type": "string", "description": "Peran pengguna saat aksi", "enum": ["siswa", "mentor", "admin"] },
+        "aksi": { "type": "string", "description": "Nama tindakan", "maxLength": 100 },
+        "detail": { "type": "string", "description": "Detail deskripsi log", "maxLength": 500 },
+        "hashSecurity": { "type": "string", "description": "Hash ringkasan keamanan", "maxLength": 100 }
+      },
+      "required": ["timestamp", "pelaku", "role", "aksi", "detail"]
+    }
+  },
+  "firestore": {
+    "/siswa/{siswaId}": {
+      "schema": "Siswa",
+      "description": "Koleksi data peserta magang"
+    },
+    "/jurnal/{jurnalId}": {
+      "schema": "JurnalHarian",
+      "description": "Koleksi catatan harian magang siswa"
+    },
+    "/jadwal/{jadwalId}": {
+      "schema": "JadwalMonitoring",
+      "description": "Koleksi jadwal monitoring bimbingan siswa"
+    },
+    "/penilaian/{penilaianId}": {
+      "schema": "PenilaianKinerja",
+      "description": "Koleksi evaluasi nilai kinerja siswa magang"
+    },
+    "/logs/{logId}": {
+      "schema": "LogAktivitas",
+      "description": "Koleksi audit trail dan riwayat aktivitas sistem"
+    }
+  }
+}

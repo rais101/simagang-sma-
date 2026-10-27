@@ -1,0 +1,157 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Hardened Security Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Bootstrapped Admin: Application Supervisor
+    function isAdmin() {
+      return isVerified() && request.auth.token.email == 'muh.rais2010@gmail.com';
+    }
+
+    // Entity Validation: Siswa
+    function isValidSiswa(data) {
+      return data.nama is string && data.nama.size() > 0 && data.nama.size() <= 150
+        && data.sekolah is string && data.sekolah.size() > 0 && data.sekolah.size() <= 150
+        && data.jurusan is string && data.jurusan.size() > 0 && data.jurusan.size() <= 100
+        && data.tempatMagang is string && data.tempatMagang.size() > 0 && data.tempatMagang.size() <= 150;
+    }
+
+    // Entity Validation: Jurnal Harian
+    function isValidJurnal(data) {
+      return data.siswaId is string && data.siswaId.size() > 0 && data.siswaId.size() <= 128
+        && data.tanggal is string && data.tanggal.size() > 0 && data.tanggal.size() <= 50
+        && data.aktivitas is string && data.aktivitas.size() > 0 && data.aktivitas.size() <= 1000
+        && data.hasil is string && data.hasil.size() > 0 && data.hasil.size() <= 1000
+        && data.statusParaf in ['Menunggu Paraf', 'Disetujui'];
+    }
+
+    // Entity Validation: Jadwal Monitoring
+    function isValidJadwal(data) {
+      return data.siswaId is string && data.siswaId.size() > 0 && data.siswaId.size() <= 128
+        && data.siswaNama is string && data.siswaNama.size() > 0 && data.siswaNama.size() <= 150
+        && data.tanggal is string && data.tanggal.size() > 0 && data.tanggal.size() <= 50
+        && data.waktu is string && data.waktu.size() > 0 && data.waktu.size() <= 50
+        && data.topik is string && data.topik.size() > 0 && data.topik.size() <= 300
+        && data.mode in ['Daring (Online)', 'Luring (Kunjungan)']
+        && data.status in ['Selesai', 'Menunggu', 'Dibatalkan'];
+    }
+
+    // Entity Validation: Penilaian Kinerja
+    function isValidPenilaian(data) {
+      return data.siswaId is string && data.siswaId.size() > 0 && data.siswaId.size() <= 128
+        && data.kedisiplinan is number && data.kedisiplinan >= 0 && data.kedisiplinan <= 100
+        && data.keterampilan is number && data.keterampilan >= 0 && data.keterampilan <= 100
+        && data.inisiatif is number && data.inisiatif >= 0 && data.inisiatif <= 100
+        && data.kerjasama is number && data.kerjasama >= 0 && data.kerjasama <= 100
+        && data.rataRata is number && data.rataRata >= 0 && data.rataRata <= 100
+        && data.predikat is string && data.predikat.size() > 0 && data.predikat.size() <= 50
+        && data.dinilaiOleh is string && data.dinilaiOleh.size() > 0 && data.dinilaiOleh.size() <= 150
+        && data.tanggal is string && data.tanggal.size() > 0 && data.tanggal.size() <= 50;
+    }
+
+    // Entity Validation: Log Aktivitas
+    function isValidLog(data) {
+      return data.pelaku is string && data.pelaku.size() > 0 && data.pelaku.size() <= 150
+        && data.role in ['siswa', 'mentor', 'admin']
+        && data.aksi is string && data.aksi.size() > 0 && data.aksi.size() <= 100
+        && data.detail is string && data.detail.size() > 0 && data.detail.size() <= 500
+        && data.timestamp is string && data.timestamp.size() > 0 && data.timestamp.size() <= 50;
+    }
+
+    // 2. Collection: Siswa
+    match /siswa/{siswaId} {
+      allow get: if isValidId(siswaId) && isSignedIn();
+      allow list: if isSignedIn() && resource.data.sekolah is string;
+      allow create: if isValidId(siswaId) && isSignedIn() && isValidSiswa(incoming());
+      allow update: if isValidId(siswaId) && isSignedIn() && isValidSiswa(incoming()) && (
+        isAdmin() ||
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'nama', 'sekolah', 'jurusan', 'tempatMagang', 'divisi', 'mentorNama', 
+          'nisn', 'foto', 'statusMagang', 'progresPercent', 'nilaiAkhir', 'predikat'
+        ])
+      );
+      allow delete: if isValidId(siswaId) && isAdmin();
+    }
+
+    // 3. Collection: Jurnal Harian
+    match /jurnal/{jurnalId} {
+      allow get: if isValidId(jurnalId) && isSignedIn();
+      allow list: if isSignedIn() && resource.data.siswaId is string;
+      allow create: if isValidId(jurnalId) && isSignedIn() && isValidJurnal(incoming());
+      allow update: if isValidId(jurnalId) && isSignedIn() && isValidJurnal(incoming()) && (
+        isAdmin() ||
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'aktivitas', 'hasil', 'kendala', 'statusParaf', 'catatanMentor'
+        ])
+      );
+      allow delete: if isValidId(jurnalId) && isAdmin();
+    }
+
+    // 4. Collection: Jadwal Monitoring
+    match /jadwal/{jadwalId} {
+      allow get: if isValidId(jadwalId) && isSignedIn();
+      allow list: if isSignedIn() && resource.data.siswaId is string;
+      allow create: if isValidId(jadwalId) && isSignedIn() && isValidJadwal(incoming());
+      allow update: if isValidId(jadwalId) && isSignedIn() && isValidJadwal(incoming()) && (
+        isAdmin() ||
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'siswaNama', 'tanggal', 'waktu', 'topik', 'mode', 'status', 'catatanMentor'
+        ])
+      );
+      allow delete: if isValidId(jadwalId) && isAdmin();
+    }
+
+    // 5. Collection: Penilaian Kinerja
+    match /penilaian/{penilaianId} {
+      allow get: if isValidId(penilaianId) && isSignedIn();
+      allow list: if isSignedIn() && resource.data.siswaId is string;
+      allow create: if isValidId(penilaianId) && isSignedIn() && isValidPenilaian(incoming());
+      allow update: if isValidId(penilaianId) && isSignedIn() && isValidPenilaian(incoming()) && (
+        isAdmin() ||
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'kedisiplinan', 'keterampilan', 'inisiatif', 'kerjasama', 'rataRata', 'predikat', 'catatanKinerja', 'dinilaiOleh', 'tanggal'
+        ])
+      );
+      allow delete: if isValidId(penilaianId) && isAdmin();
+    }
+
+    // 6. Collection: Log Aktivitas
+    match /logs/{logId} {
+      allow get: if isValidId(logId) && isSignedIn();
+      allow list: if isSignedIn() && resource.data.role is string;
+      allow create: if isValidId(logId) && isSignedIn() && isValidLog(incoming());
+      allow update: if false; // Append-only audit trail
+      allow delete: if isValidId(logId) && isAdmin();
+    }
+
+    // 7. Connection health check doc
+    match /test/{docId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}
